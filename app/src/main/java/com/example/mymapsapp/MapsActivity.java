@@ -2,6 +2,7 @@ package com.example.mymapsapp;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.location.LocationManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
@@ -18,6 +19,12 @@ import com.google.android.gms.maps.model.MarkerOptions;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
+    private LocationManager locationManager;
+    private boolean isGPSEnabled = false;
+    private boolean isNetworkEnabled = false;
+    private static final int MIN_TIME_BW_UPDATES = 1000*5;
+    private static final float MIN_DISTANCE_CHANGE_FOR_UPDATE = 0.0f ;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +57,38 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         setLocationEnabled();
     }
+    public void getLocation(){
+        try{
+            locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+            //get GPS status
+            isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+            if(isGPSEnabled) Log.d("MyMapsApp", "getLocation; GPS is enabled");
+            //TODO get network status (cell tower + wifi) Look for network provider in LocationManager
+            //TODO add code here to update isNetworkEnabled and output Log.d
+            if(!isGPSEnabled && !isNetworkEnabled)
+                Log.d("MyMapsApp", "getLocation: No provider enabled");
+            else{
+                if(isNetworkEnabled){
+                    //TODO add Log.d
+                    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
+                            MIN_TIME_BW_UPDATES,
+                            MIN_DISTANCE_CHANGE_FOR_UPDATE,
+                            locationListenerNetwork);
+                }
+                if(isGPSEnabled){
+                    //TODO add Log.d
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                            MIN_TIME_BW_UPDATES,
+                            MIN_DISTANCE_CHANGE_FOR_UPDATE,
+                            locationListenerNetwork);
+                }
+            }
+
+        }catch (Exception e){
+            //put log.d
+            e.printStackTrace();
+        }
+    }
     public void setLocationEnabled(){
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
@@ -73,7 +112,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if(grantResults.length >0){
             for(int i:grantResults){
                 if(i != PackageManager.PERMISSION_GRANTED){
-                    Log.d("MyMapsApp","Location permision denied");
+                    Log.d("MyMapsApp","Location permission denied");
                     break;
                 }
             }
